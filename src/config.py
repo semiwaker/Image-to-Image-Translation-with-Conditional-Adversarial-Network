@@ -1,0 +1,1 @@
+PICTURE_SIZE = 64
