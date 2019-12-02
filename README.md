@@ -1,2 +1,2 @@
-# A little project
-- Hello
+# 有关连网
+- 我为git设置了一个代理服务器，可以不联网的情况下使用git clone，但是github下载的速度很慢，只有几十K每秒所以需要等待一段时间.
