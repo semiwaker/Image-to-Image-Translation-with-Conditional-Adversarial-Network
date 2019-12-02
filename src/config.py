@@ -17,3 +17,4 @@ LEAKY_RELU_ALPHA = 0.2  # Alpha value for leaky_relu
 OUTPUT_CHANNELs = 3
 
 # D model
+NDF = 64  # number of discriminator filters

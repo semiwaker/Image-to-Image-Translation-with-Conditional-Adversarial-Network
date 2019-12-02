@@ -52,16 +52,41 @@ def G_model():
         x = DeConv2d(n_filter=ngf, filter_size=(4, 4), strides=(2, 2))(x)
         x = BatchNorm2d(act=tf.nn.relu)(x)
         x = Dropout(dropout)(x)
-        x = tf.concat(x, encode_layer[-i])
+        x = Concat(-1)(x, encode_layer[-i])
 
     # Special treatment for the last layer
 
     x = DeConv2d(n_filter=config.OUTPUT_CHANNELs,
                  filter_size=(4, 4), strides=(2, 2))(x)
-    x_output = hard_tanh(x)
+    x_output = tf.nn.tanh(x)
 
     return Model(inputs=x_input, outputs=x_output, name="generator")
 
 
 def D_model():
-    pass
+    SIZE = config.PICTURE_SIZE
+    CHANNELS = config.PICTURE_CHANNELS
+
+    def relu_act(x):
+        return leaky_relu(x, config.LEAKY_RELU_ALPHA)
+
+    x_input = Input((-1, SIZE, SIZE, CHANNELS), name="x_input")
+    y_input = Input((-1, SIZE, SIZE, CHANNELS), name="y_input")
+    net = Concat(-1)(x_input, y_input)
+
+    sz = SIZE / 2
+    ndf = config.NDF
+    while sz >= 32:
+        net = PadLayer([[0, 0], [1, 1], [1, 1], [0, 0]], mode="CONSTANT")
+        net = Conv2d(n_filter=ndf, filter_size=(4, 4),
+                     strides=(2, 2), padding="valid")(net)
+        net = BatchNorm2d(act=relu_act)(net)
+        ndf *= 2
+        sz /= 2
+
+    net = PadLayer([[0, 0], [1, 1], [1, 1], [0, 0]], mode="CONSTANT")
+    net = Conv2d(n_filter=1, filter_size=(4, 4),
+                 strides=(2, 2), padding="valid")(net)
+    net = tf.nn.sigmoid(net)
+
+    return Model(inputs=(x_input, y_input), outputs=net, name="discriminator")
