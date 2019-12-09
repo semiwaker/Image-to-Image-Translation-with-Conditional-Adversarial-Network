@@ -6,6 +6,8 @@ import tensorlayer as tl
 from tensorlayer.layers import *
 from tensorlayer.activation import *
 from tensorlayer.models import Model
+from tensorlayer.array_ops import alphas_like
+from tensorlayer.cost import binary_cross_entropy
 
 import numpy as np
 import pandas as pd
@@ -88,5 +90,9 @@ def D_model():
     net = Conv2d(n_filter=1, filter_size=(4, 4),
                  strides=(2, 2), padding="valid")(net)
     net = tf.nn.sigmoid(net)
+    net = Reshape((-1, net.shape[1] * net.shape[2]), net)
 
     return Model(inputs=(x_input, y_input), outputs=net, name="discriminator")
+
+def loss(x, target):
+    return binary_cross_entropy(x, alphas_like(x, target))
