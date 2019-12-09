@@ -15,18 +15,21 @@
 
 $$
 \begin{aligned} \mathcal{L}_{c G A N}(G, D)=& \mathbb{E}_{x, y}[\log D(x, y)]+\\ & \mathbb{E}_{x, z}[\log (1-D(x, G(x, z))]\end{aligned}
+
 $$
 
 然后为了让生成器生成的图片类型和我们给出的y的类型尽量相近，增加一个L1 Loss：
 
 $$
 \mathcal{L}_{L 1}(G)=\mathbb{E}_{x, y, z}\left[\|y-G(x, z)\|_{1}\right]
+
 $$
 
 总目标就是让生成器生成的图片尽量牛逼，目标函数是：
 
 $$
 G^{*}=\arg \min _{G} \max _{D} \mathcal{L}_{c G A N}(G, D)+\lambda \mathcal{L}_{L 1}(G)
+
 $$
 
 注：实际实现时并没有真的加噪声，而是用随机Dropout当做噪声
