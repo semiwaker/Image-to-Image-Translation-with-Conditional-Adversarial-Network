@@ -7,7 +7,7 @@
 判别器接收两个参数作为输入：
 	给出的图像x；真实的相似图像y或生成的图像G(x,z)
 判别器目标：
-	尽量让$D(x,y)\to 1, D(x,G(x,z))\to 0$
+	尽量让 ![](http://latex.codecogs.com/gif.latex?\\D(x,y)\to 1, D(x,G(x,z))\to 0)
 
 生成器目标：尽量让 $D(x,G(x,z)) \to 1$
 
