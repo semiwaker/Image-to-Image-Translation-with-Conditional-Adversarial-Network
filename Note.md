@@ -9,28 +9,21 @@
 判别器目标：
 	尽量让 ![](http://latex.codecogs.com/gif.latex?D%28x%2Cy%29%5Cto%201%2C%20D%28x%2CG%28x%2Cz%29%29%5Cto%200)
 
-生成器目标：尽量让 $D(x,G(x,z)) \to 1$
+生成器目标：尽量让 ![](http://latex.codecogs.com/gif.latex?D%28x%2CG%28x%2Cz%29%29%20%5Cto%201)
 
 这是根据损失函数得出的：
 
-$$
-\begin{aligned} \mathcal{L}_{c G A N}(G, D)=& \mathbb{E}_{x, y}[\log D(x, y)]+\\ & \mathbb{E}_{x, z}[\log (1-D(x, G(x, z))]\end{aligned}
-
-$$
+![](http://latex.codecogs.com/gif.latex?%5Cbegin%7Baligned%7D%20%5Cmathcal%7BL%7D_%7Bc%20G%20A%20N%7D%28G%2C%20D%29%3D%26%20%5Cmathbb%7BE%7D_%7Bx%2C%20y%7D%5B%5Clog%20D%28x%2C%20y%29%5D&plus;%5C%5C%20%26%20%5Cmathbb%7BE%7D_%7Bx%2C%20z%7D%5B%5Clog%20%281-D%28x%2C%20G%28x%2C%20z%29%29%5D%5Cend%7Baligned%7D)
 
 然后为了让生成器生成的图片类型和我们给出的y的类型尽量相近，增加一个L1 Loss：
 
-$$
-\mathcal{L}_{L 1}(G)=\mathbb{E}_{x, y, z}\left[\|y-G(x, z)\|_{1}\right]
+![](http://latex.codecogs.com/gif.latex?%5Cmathcal%7BL%7D_%7BL%201%7D%28G%29%3D%5Cmathbb%7BE%7D_%7Bx%2C%20y%2C%20z%7D%5Cleft%5B%5C%7Cy-G%28x%2C%20z%29%5C%7C_%7B1%7D%5Cright%5D)
 
-$$
 
 总目标就是让生成器生成的图片尽量牛逼，目标函数是：
 
-$$
-G^{*}=\arg \min _{G} \max _{D} \mathcal{L}_{c G A N}(G, D)+\lambda \mathcal{L}_{L 1}(G)
+![](http://latex.codecogs.com/gif.latex?G%5E%7B*%7D%3D%5Carg%20%5Cmin%20_%7BG%7D%20%5Cmax%20_%7BD%7D%20%5Cmathcal%7BL%7D_%7Bc%20G%20A%20N%7D%28G%2C%20D%29&plus;%5Clambda%20%5Cmathcal%7BL%7D_%7BL%201%7D%28G%29)
 
-$$
 
 注：实际实现时并没有真的加噪声，而是用随机Dropout当做噪声
 
