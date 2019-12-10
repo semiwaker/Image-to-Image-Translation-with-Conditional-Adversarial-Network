@@ -31,8 +31,8 @@ def G_model():
 
     # e1 : C64
     # e1 output is (128 x 128 x 64)
-    e1 = Conv2d(n_filter=NGF, filter_size=(4, 4), strides=(2, 2))(x_input)
-    e1 = BatchNorm2d(act=relu_act, name="g_e1_conv")(e1)
+    e1 = Conv2d(n_filter=NGF, filter_size=(4, 4), strides=(2, 2),
+                act=relu_act, name="g_e1_conv")(x_input)
     # e2 : C128
     # e2 output is (64 x 64 x 128)
     e2 = Conv2d(n_filter=NGF * 2, filter_size=(4, 4), strides=(2, 2))(e1)
@@ -119,6 +119,7 @@ def D_model():
         return leaky_relu(x, config.LEAKY_RELU_ALPHA)
 
     x_input = Input((-1, SIZE, SIZE, CHANNELS), name="x_input")
+    # From FF: Maybe y_input is OUTPUT_CHANNELS?
     y_input = Input((-1, SIZE, SIZE, CHANNELS), name="y_input")
     net = Concat(-1)(x_input, y_input)
 
@@ -142,3 +143,54 @@ def D_model():
 
 def loss(x, target):
     return binary_cross_entropy(x, alphas_like(x, target))
+
+def discriminator():
+    # input size is 256 x 256 x ~(3 + 3), output size is 841=29*29 sigmoid
+    FILTERS = config.NDF
+    SIZE = config.PICTURE_SIZE
+    CHANNELS = config.PICTURE_CHANNELS
+    OUTPUT_CHANNELS = config.OUTPUT_CHANNELs
+    BATCHSIZE = config.BATCH_SIZE
+
+    def lrelu_act(x):
+        return leaky_relu(x, config.LEAKY_RELU_ALPHA)
+
+    # 70 x 70 PatchGAN : 
+    # C64-C128-C256-C512-~C1-Linear
+
+    # Image : Input
+    # Image output is 256 x 256 x (input_channels + output_channels)
+    # Receptive Field is 1 x 1
+    Image = Input((BATCHSIZE, SIZE, SIZE, (CHANNELS + OUTPUT_CHANNELS)), name="Image")
+    # h0 : C64 without BatchNorm
+    # h0 output is 128 x 128 x 64
+    # Receptive Field is 4 x 4
+    h0 = Conv2d(n_filter=FILTERS, filter_size=(4, 4), strides=(2, 2),
+                act=lrelu_act, name="d_h0_conv")(Image)
+    # h1 : C128
+    # h1 output is 64 x 64 x 128
+    # Receptive Field is 10 x 10
+    h1 = Conv2d(n_filter=FILTERS * 2, filter_size=(4, 4), strides=(2, 2))(h0)
+    h1 = BatchNorm2d(act=lrelu_act, name="d_h1_conv")(h1)
+    # h2 : C256
+    # h2 output is 32 x 32 x 256
+    # Receptive Field is 22 x 22
+    h2 = Conv2d(n_filter=FILTERS * 4, filter_size=(4, 4), strides=(2, 2))(h1)
+    h2 = BatchNorm2d(act=lrelu_act, name="d_h2_conv")(h2)
+    # h3 : C512
+    # h3 output is 32 x 32 x 512
+    # Receptive Field is 46 x 46
+    h3 = Conv2d(n_filter=FILTERS * 8, filter_size=(4, 4), strides=(1, 1))(h2)
+    h3 = BatchNorm2d(act=lrelu_act, name="d_h3_conv")(h3)
+    # h4 : ~C1
+    # h4 output is 29 x 29 x 1
+    # Receptive Field is 70 x 70
+    h4 = Conv2d(n_filter=1, filter_size=(4, 4), strides=(1, 1), padding="valid")(h3)
+    # lin : linear
+    # lin output is 841
+    lin = Reshape([BATCHSIZE, -1])(h4)
+    lin = tf.nn.sigmoid(lin, name="d_lin")
+
+    return Model(inputs=Image, outputs=lin, name="Discriminator 70x70")
+    
+    
