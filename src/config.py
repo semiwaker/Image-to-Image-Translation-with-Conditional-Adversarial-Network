@@ -8,7 +8,7 @@ TEST_PATH = "./data"  # path of the testing dataset
 DEV_PATH = "./data"  # path of the develep dataset
 
 # Train
-BATCH_SIZE = 8
+BATCH_SIZE = 10
 EPOCHS = 10
 
 # G model
