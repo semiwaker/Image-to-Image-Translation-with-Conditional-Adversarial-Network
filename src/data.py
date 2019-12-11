@@ -44,10 +44,17 @@ class Dataset:
         key_list = np.random.choice(self.random_list, config.BATCH_SIZE)
         for key in key_list:
             a = (random.choice(self.data['train'][key]))
+            x_img = a[:, 256:, :]
+            y_img = a[:, :256, :]
             # from IPython import embed
             # embed()
-            x_list.append(a[:,256:,:])
-            y_list.append(a[:,:256,:])
+            if key in ['edges2shoes', 'edges2handbags']:
+                x_list.append(y_img)
+                y_list.append(x_img)
+            else:
+                x_list.append(x_img)
+                y_list.append(y_img)
+                
         return x_list, y_list
 
 
