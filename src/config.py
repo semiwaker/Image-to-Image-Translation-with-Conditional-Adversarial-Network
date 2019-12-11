@@ -3,7 +3,8 @@
 # Dataset
 PICTURE_SIZE = 256  # width and height of the input picture
 PICTURE_CHANNELS = 3  # color channel of the input picture
-TRAIN_PATH = "./data"  # path of the training dataset
+TRAIN_PATH = "./data1/luozizhang/dataset"  # path of the training dataset
+#TRAIN_PATH = "."
 TEST_PATH = "./data"  # path of the testing dataset
 DEV_PATH = "./data"  # path of the develep dataset
 
