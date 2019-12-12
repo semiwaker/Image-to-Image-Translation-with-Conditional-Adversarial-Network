@@ -54,8 +54,19 @@ class Dataset:
             else:
                 x_list.append(x_img)
                 y_list.append(y_img)
-                
+
         return x_list, y_list
+
+    def __iter__(self):
+        # TODO: Reset inner state
+        self.cnt = 0
+        return self
+
+    def __next__(self):
+        # TODO: check end of epoch and call generator
+        if self.cnt > len(self.data['train']):
+            raise StopIteration
+        return self.generate()
 
 
 if __name__ == '__main__':
@@ -67,4 +78,3 @@ if __name__ == '__main__':
         im.show()
         from IPython import embed
         embed()
-

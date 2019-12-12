@@ -11,6 +11,10 @@ DEV_PATH = "./data"  # path of the develep dataset
 # Train
 BATCH_SIZE = 10
 EPOCHS = 10
+ADAM_LR = 0.0002
+ADAM_BETA1 = 0.5
+ADAM_BETA2 = 0.999
+OUTPUT_FREQ = 100
 
 # G model
 NGF = 64  # number of generator filters
