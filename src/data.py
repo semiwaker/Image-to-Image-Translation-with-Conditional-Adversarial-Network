@@ -66,6 +66,7 @@ class Dataset:
         # TODO: check end of epoch and call generator
         if self.cnt > len(self.data['train']):
             raise StopIteration
+        self.cnt+=1
         return self.generate()
 
 

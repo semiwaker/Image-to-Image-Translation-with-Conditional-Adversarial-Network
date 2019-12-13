@@ -70,12 +70,21 @@ def train(dataset_name, verbose):
     G_optimizer = tf.optimizers.Adam(LR, BETA1, BETA2)
     D_optimizer = tf.optimizers.Adam(LR, BETA1, BETA2)
 
-    # TODO: set up pyplot
+    # set up pyplot
+    plt.ion()
+    g_loss = []
+    d_loss = []
+    batch_cnt = []
+    total_batch = 0
+    plt.legend("best")
 
     # Start training
     VPrint("Start training")
     global_timer = Timer()
     global_loss = AccumulatedLoss("Global")
+
+    G.train()
+    D.train()
 
     for epoch in range(1, EPOCHS+1):
         epoch_timer = Timer()
@@ -84,6 +93,7 @@ def train(dataset_name, verbose):
         running_loss = AccumulatedLoss("Running")
 
         for (x, y), i in enumerate(dataset):
+            total_batch += 1
 
             with tf.GradientTape(persistent=True) as tape:
                 z = G(x)
@@ -110,16 +120,44 @@ def train(dataset_name, verbose):
             if i % config.OUTPUT_FREQ == 0:
                 VPrint(running_loss, f"time used:{epoch_timer()}")
                 running_loss.reset()
-                # TODO make graph
+
+                # make graph
+                g_loss.append(batch_G_loss)
+                d_loss.append(batch_D_loss)
+                batch_cnt.append(total_batch)
+                plt.plot(batch_cnt, g_loss, label="generator loss")
+                plt.plot(batch_cnt, d_loss, label="discriminator loss")
+                plt.draw()
 
         VPrint(f"Epoch {epoch} time used:{epoch_timer()}")
         VPrint(epoch_loss)
-        # TODO: make graph
+
+        # make graph
+        plt.ioff()
+        plt.plot(batch_cnt, g_loss, label="generator loss")
+        plt.plot(batch_cnt, d_loss, label="discriminator loss")
+        plt.savefig(config.LOSS_PLOT_PATH, dpi=120, quality=100)
+        plt.show()
 
     VPrint(f"End training. Time used {global_timer()}")
     VPrint(global_loss)
 
+    # save model
+    G.save(config.G_SAVE_PATH)
+    D.save(config.D_SAVE_PATH)
+
 
 if __name__ == "__main__":
-    # TODO argparse and call train
-    pass
+    parser = argparse.ArgumentParser(description="Train Pix2Pix")
+    parser.add_argument(
+        "dataset",
+        metavar="D",
+        type=str,
+        nargs=1,
+        help="the name of the dataset"
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true"
+    )
+    train(parser.dataset, parser.verbose)

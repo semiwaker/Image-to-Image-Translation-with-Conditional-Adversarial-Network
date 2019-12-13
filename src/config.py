@@ -15,11 +15,14 @@ ADAM_LR = 0.0002
 ADAM_BETA1 = 0.5
 ADAM_BETA2 = 0.999
 OUTPUT_FREQ = 100
+LOSS_PLOT_PATH = "./model/loss.jpg"
 
 # G model
 NGF = 64  # number of generator filters
 LEAKY_RELU_ALPHA = 0.2  # Alpha value for leaky_relu
 OUTPUT_CHANNELs = 3
+G_SAVE_PATH="./model/G_model"
 
 # D model
 NDF = 64  # number of discriminator filters
+D_SAVE_PATH="./model/D_model"
