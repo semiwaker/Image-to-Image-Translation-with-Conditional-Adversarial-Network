@@ -26,3 +26,6 @@ G_SAVE_PATH="./model/G_model"
 # D model
 NDF = 64  # number of discriminator filters
 D_SAVE_PATH="./model/D_model"
+
+# test
+TEST_FIG_PATH = "./test.jpg"
