@@ -7,13 +7,13 @@ from tensorlayer.layers import *
 from tensorlayer.activation import *
 from tensorlayer.models import Model
 from tensorlayer.array_ops import alphas_like
-from tensorlayer.cost import binary_cross_entropy
+from tensorlayer.cost import binary_cross_entropy, absolute_difference_error
 
 import numpy as np
 import pandas as pd
 
 
-def G_model():
+def generator():
     NGF = config.NGF
     SIZE = config.PICTURE_SIZE
     CHANNELS = config.PICTURE_CHANNELS
@@ -61,7 +61,7 @@ def G_model():
     # e8 output is (1 x 1 x 512)
     e8 = Conv2d(n_filter=NGF * 8, filter_size=(4, 4), strides=(2, 2))(e7)
     e8 = BatchNorm2d(act=relu_act, name="g_e8_conv")(e8)
-    
+
     # decoder:
     # -⑧-CD512-⑨-CD512-⑩-CD512-⑪-C512-⑫-C256-⑬-C128-⑭-C64-⑮-~C3
 
@@ -111,39 +111,6 @@ def G_model():
     return Model(inputs=x_input, outputs=d8, name="generator")
 
 
-def D_model():
-    SIZE = config.PICTURE_SIZE
-    CHANNELS = config.PICTURE_CHANNELS
-
-    def relu_act(x):
-        return leaky_relu(x, config.LEAKY_RELU_ALPHA)
-
-    x_input = Input((-1, SIZE, SIZE, CHANNELS), name="x_input")
-    # From FF: Maybe y_input is OUTPUT_CHANNELS?
-    y_input = Input((-1, SIZE, SIZE, CHANNELS), name="y_input")
-    net = Concat(-1)(x_input, y_input)
-
-    sz = SIZE / 2
-    ndf = config.NDF
-    while sz >= 32:
-        net = PadLayer([[0, 0], [1, 1], [1, 1], [0, 0]], mode="CONSTANT")
-        net = Conv2d(n_filter=ndf, filter_size=(4, 4),
-                     strides=(2, 2), padding="valid")(net)
-        net = BatchNorm2d(act=relu_act)(net)
-        ndf *= 2
-        sz /= 2
-
-    net = PadLayer([[0, 0], [1, 1], [1, 1], [0, 0]], mode="CONSTANT")
-    net = Conv2d(n_filter=1, filter_size=(4, 4),
-                 strides=(2, 2), padding="valid")(net)
-    net = tf.nn.sigmoid(net)
-    net = Reshape((-1, net.shape[1] * net.shape[2]), net)
-
-    return Model(inputs=(x_input, y_input), outputs=net, name="discriminator")
-
-def loss(x, target):
-    return binary_cross_entropy(x, alphas_like(x, target))
-
 def discriminator():
     # input size is 256 x 256 x ~(3 + 3), output size is 841=29*29 sigmoid
     FILTERS = config.NDF
@@ -155,18 +122,21 @@ def discriminator():
     def lrelu_act(x):
         return leaky_relu(x, config.LEAKY_RELU_ALPHA)
 
-    # 70 x 70 PatchGAN : 
+    # 70 x 70 PatchGAN :
     # C64-C128-C256-C512-~C1-Linear
 
-    # Image : Input
-    # Image output is 256 x 256 x (input_channels + output_channels)
+    # Image : The image that is needed to be discriminate
+    Image = Input((BATCHSIZE, SIZE, SIZE, CHANNELS), name="Image")
+    # Tag : Tag image
+    Tag = Input((BATCHSIZE, SIZE, SIZE, OUTPUT_CHANNELS), name="Tag")
+    # Merged output is 256 x 256 x (input_channels + output_channels)
     # Receptive Field is 1 x 1
-    Image = Input((BATCHSIZE, SIZE, SIZE, (CHANNELS + OUTPUT_CHANNELS)), name="Image")
+    Merged = Concat(-1)(Image, Tag)
     # h0 : C64 without BatchNorm
     # h0 output is 128 x 128 x 64
     # Receptive Field is 4 x 4
     h0 = Conv2d(n_filter=FILTERS, filter_size=(4, 4), strides=(2, 2),
-                act=lrelu_act, name="d_h0_conv")(Image)
+                act=lrelu_act, name="d_h0_conv")(Merged)
     # h1 : C128
     # h1 output is 64 x 64 x 128
     # Receptive Field is 10 x 10
@@ -185,12 +155,19 @@ def discriminator():
     # h4 : ~C1
     # h4 output is 29 x 29 x 1
     # Receptive Field is 70 x 70
-    h4 = Conv2d(n_filter=1, filter_size=(4, 4), strides=(1, 1), padding="valid")(h3)
+    h4 = Conv2d(n_filter=1, filter_size=(4, 4),
+                strides=(1, 1), padding="valid")(h3)
     # lin : linear
     # lin output is 841
     lin = Reshape([BATCHSIZE, -1])(h4)
     lin = tf.nn.sigmoid(lin, name="d_lin")
 
-    return Model(inputs=Image, outputs=lin, name="Discriminator 70x70")
-    
-    
+    return Model(inputs=(Image, Tag), outputs=lin, name="Discriminator 70x70")
+
+
+def entropy_loss(x, target):
+    return binary_cross_entropy(x, alphas_like(x, target))
+
+
+def L1_loss(y, z):
+    return absolute_difference_error(y, z, is_mean=True)
