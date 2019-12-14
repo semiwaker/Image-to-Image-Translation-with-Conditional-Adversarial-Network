@@ -70,19 +70,19 @@ def generator():
     d1 = DeConv2d(n_filter=NGF * 8, filter_size=(4, 4), strides=(2, 2))(e8)
     d1 = BatchNorm2d(act=tf.nn.relu)(d1)
     d1 = Dropout(0.5)(d1)
-    d1 = Concat(concat_dim=4, name="g_d1")(d1, e7)
+    d1 = Concat(concat_dim=-1, name="g_d1")(d1, e7)
     # d2 : CD512
     # d2 output is (4 x 4 x (512 + 512(concat)) )
     d2 = DeConv2d(n_filter=NGF * 8, filter_size=(4, 4), strides=(2, 2))(d1)
     d2 = BatchNorm2d(act=tf.nn.relu)(d2)
     d2 = Dropout(0.5)(d2)
-    d2 = Concat(concat_dim=4, name="g_d2")(d2, e6)
+    d2 = Concat(concat_dim=-1, name="g_d2")(d2, e6)
     # d3 : CD512
     # d3 output is (8 x 8 x (512 + 512(concat)) )
     d3 = DeConv2d(n_filter=NGF * 8, filter_size=(4, 4), strides=(2, 2))(d2)
     d3 = BatchNorm2d(act=tf.nn.relu)(d3)
     d3 = Dropout(0.5)(d3)
-    d3 = Concat(concat_dim=4, name="g_d3")(d3, e5)
+    d3 = Concat(concat_dim=-1, name="g_d3")(d3, e5)
     # d4 : C512
     # d4 output is (16 x 16 x (512 + 512(concat)) )
     d4 = DeConv2d(n_filter=NGF * 8, filter_size=(4, 4), strides=(2, 2))(d3)
@@ -92,17 +92,17 @@ def generator():
     # d5 output is (32 x 32 x (256 + 256(concat)) )
     d5 = DeConv2d(n_filter=NGF * 4, filter_size=(4, 4), strides=(2, 2))(d4)
     d5 = BatchNorm2d(act=tf.nn.relu)(d5)
-    d5 = Concat(concat_dim=4, name="g_d5")(d5, e3)
+    d5 = Concat(concat_dim=-1, name="g_d5")(d5, e3)
     # d6 : C128
     # d6 output is (64 x 64 x (128 + 128(concat)) )
     d6 = DeConv2d(n_filter=NGF * 2, filter_size=(4, 4), strides=(2, 2))(d5)
     d6 = BatchNorm2d(act=tf.nn.relu)(d6)
-    d6 = Concat(concat_dim=4, name="g_d6")(d6, e2)
+    d6 = Concat(concat_dim=-1, name="g_d6")(d6, e2)
     # d7 : C64
     # d7 output is (128 x 128 x (64 + 64(concat)) )
     d7 = DeConv2d(n_filter=NGF, filter_size=(4, 4), strides=(2, 2))(d6)
     d7 = BatchNorm2d(act=tf.nn.relu)(d7)
-    d7 = Concat(concat_dim=4, name="g_d7")(d7, e1)
+    d7 = Concat(concat_dim=-1, name="g_d7")(d7, e1)
     # d8 : x_output
     # d8 output is (256 x 256 x 3)
     d8 = DeConv2d(n_filter=config.OUTPUT_CHANNELs, filter_size=(4, 4),
