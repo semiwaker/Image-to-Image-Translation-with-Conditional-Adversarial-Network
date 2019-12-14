@@ -54,7 +54,7 @@ class AccumulatedLoss:
         return f"{name} loss: G {self.G_loss/cnt} D {self.D_loss/cnt}"
 
 
-def train(dataset_name, verbose):
+def train(dataset_name, verbose, make_graph):
     _verbose = verbose
     EPOCHS = config.EPOCHS
     LR = config.ADAM_LR
@@ -71,12 +71,13 @@ def train(dataset_name, verbose):
     D_optimizer = tf.optimizers.Adam(LR, BETA1, BETA2)
 
     # set up pyplot
-    plt.ion()
-    g_loss = []
-    d_loss = []
-    batch_cnt = []
-    total_batch = 0
-    plt.legend("best")
+    if make_graph:
+        plt.ion()
+        g_loss = []
+        d_loss = []
+        batch_cnt = []
+        total_batch = 0
+        plt.legend("best")
 
     # Start training
     VPrint("Start training")
@@ -97,11 +98,11 @@ def train(dataset_name, verbose):
 
             with tf.GradientTape(persistent=True) as tape:
                 z = G(x)
-                d_logits = D(inputs=(x, y))
-                d2_logits = D(inputs=(z, y))
+                d_logits = D(inputs=(y, x))
+                d2_logits = D(inputs=(z, x))
 
                 d_loss = entropy_loss(d_logits, 1) + entropy_loss(d2_logits, 0)
-                g_loss = entropy_loss(d2_logits, 1) + L1_loss(y, z)
+                g_loss = entropy_loss(d2_logits, 1) + config.LAMBDA * L1_loss(y, z)
 
             # train generator
             grad = tape.gradient(g_loss, G.trainable_weights)
@@ -125,26 +126,28 @@ def train(dataset_name, verbose):
                 g_loss.append(batch_G_loss)
                 d_loss.append(batch_D_loss)
                 batch_cnt.append(total_batch)
-                plt.plot(batch_cnt, g_loss, label="generator loss")
-                plt.plot(batch_cnt, d_loss, label="discriminator loss")
-                plt.draw()
+                if make_graph:
+                    plt.plot(batch_cnt, g_loss, label="generator loss")
+                    plt.plot(batch_cnt, d_loss, label="discriminator loss")
+                    plt.draw()
 
         VPrint(f"Epoch {epoch} time used:{epoch_timer()}")
         VPrint(epoch_loss)
 
         # make graph
-        plt.ioff()
-        plt.plot(batch_cnt, g_loss, label="generator loss")
-        plt.plot(batch_cnt, d_loss, label="discriminator loss")
-        plt.savefig(config.LOSS_PLOT_PATH, dpi=120, quality=100)
-        plt.show()
+        if make_graph:
+            plt.ioff()
+            plt.plot(batch_cnt, g_loss, label="generator loss")
+            plt.plot(batch_cnt, d_loss, label="discriminator loss")
+            plt.savefig(config.LOSS_PLOT_PATH, dpi=120, quality=100)
+            plt.show()
 
     VPrint(f"End training. Time used {global_timer()}")
     VPrint(global_loss)
 
     # save model
-    G.save_weights(config.G_SAVE_PATH)
-    D.save_weights(config.D_SAVE_PATH)
+    G.save_weights(config.G_SAVE_PATH+'_'+dataset_name)
+    D.save_weights(config.D_SAVE_PATH+'_'+dataset_name)
 
 
 if __name__ == "__main__":
@@ -160,5 +163,9 @@ if __name__ == "__main__":
         "-v", "--verbose",
         action="store_true"
     )
+    parser.add_argument(
+        "-g", "--makegraph",
+        action="store_true"
+    )
     args = parser.parse_args()
-    train(args.dataset, args.verbose)
+    train(args.dataset, args.verbose, args.makegraph)
