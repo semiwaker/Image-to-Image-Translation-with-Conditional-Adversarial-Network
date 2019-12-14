@@ -22,6 +22,7 @@ NGF = 64  # number of generator filters
 LEAKY_RELU_ALPHA = 0.2  # Alpha value for leaky_relu
 OUTPUT_CHANNELs = 3
 G_SAVE_PATH="./model/G_model"
+LAMBDA = 1.0
 
 # D model
 NDF = 64  # number of discriminator filters
