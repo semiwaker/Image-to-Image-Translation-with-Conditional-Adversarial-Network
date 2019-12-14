@@ -7,8 +7,8 @@ import argparse
 import matplotlib.pyplot as plt
 
 
-def show_generated(input_file, output_file, ground_truth_file):
-    x = read_picture(input_file)
+def show_generated(dataset, input_file, output_file, ground_truth_file):
+    x = read_picture(dataset, input_file)
 
     G = generator()
     G.load_weights(config.G_SAVE_PATH)
@@ -37,8 +37,7 @@ def show_generated(input_file, output_file, ground_truth_file):
     # Save output file
     # FIXME: plt is not really suitable for this job
     if not len(output_file):
-        tokens = input_file.strip().split(".")
-        output_file = "".join(tokens[:-1])+".out"+tokens[-1]
+        output_file = dataset+"_out_"+str(input_file)+".jpg"
 
     plt.imshow(y)
     plt.axis("off")
@@ -48,10 +47,16 @@ def show_generated(input_file, output_file, ground_truth_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate input image")
     parser.add_argument(
-        "input",
+        "dataset",
         nargs=1,
         type=str,
-        help="Input file"
+        help="Dataset"
+    )
+    parser.add_argument(
+        "input",
+        nargs=1,
+        type=int,
+        help="Input file number"
     )
     parser.add_argument(
         "-o", "--output",
@@ -67,4 +72,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    show_generated(args.input, args.output, args.ground_truth)
+    show_generated(args.dataset, args.input, args.output, args.ground_truth)
