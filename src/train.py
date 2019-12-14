@@ -143,8 +143,8 @@ def train(dataset_name, verbose):
     VPrint(global_loss)
 
     # save model
-    G.save(config.G_SAVE_PATH)
-    D.save(config.D_SAVE_PATH)
+    G.save_weights(config.G_SAVE_PATH)
+    D.save_weights(config.D_SAVE_PATH)
 
 
 if __name__ == "__main__":
@@ -160,4 +160,5 @@ if __name__ == "__main__":
         "-v", "--verbose",
         action="store_true"
     )
-    train(parser.dataset, parser.verbose)
+    args = parser.parse_args()
+    train(args.dataset, args.verbose)

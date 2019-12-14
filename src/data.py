@@ -69,6 +69,10 @@ class Dataset:
         self.cnt+=1
         return self.generate()
 
+def read_picture(input_file):
+    'Read a picture, transform into model input format'
+    # TODO: imple this function
+    pass
 
 if __name__ == '__main__':
     from PIL import Image
