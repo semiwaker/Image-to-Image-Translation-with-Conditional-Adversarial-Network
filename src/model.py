@@ -117,7 +117,6 @@ def discriminator():
     SIZE = config.PICTURE_SIZE
     CHANNELS = config.PICTURE_CHANNELS
     OUTPUT_CHANNELS = config.OUTPUT_CHANNELs
-    BATCHSIZE = config.BATCH_SIZE
 
     def lrelu_act(x):
         return leaky_relu(x, config.LEAKY_RELU_ALPHA)
@@ -126,9 +125,9 @@ def discriminator():
     # C64-C128-C256-C512-~C1-Linear
 
     # Image : The image that is needed to be discriminate
-    Image = Input((BATCHSIZE, SIZE, SIZE, CHANNELS), name="Image")
+    Image = Input((-1, SIZE, SIZE, CHANNELS), name="Image")
     # Tag : Tag image
-    Tag = Input((BATCHSIZE, SIZE, SIZE, OUTPUT_CHANNELS), name="Tag")
+    Tag = Input((-1, SIZE, SIZE, OUTPUT_CHANNELS), name="Tag")
     # Merged output is 256 x 256 x (input_channels + output_channels)
     # Receptive Field is 1 x 1
     Merged = Concat(-1)(Image, Tag)
@@ -159,7 +158,7 @@ def discriminator():
                 strides=(1, 1), padding="valid")(h3)
     # lin : linear
     # lin output is 841
-    lin = Reshape([BATCHSIZE, -1])(h4)
+    lin = Reshape([h4.shape[0], -1])(h4)
     lin = tf.nn.sigmoid(lin, name="d_lin")
 
     return Model(inputs=(Image, Tag), outputs=lin, name="Discriminator 70x70")

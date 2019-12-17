@@ -15,10 +15,17 @@ def show_generated(dataset, input_file, output_file, ground_truth_file):
 
     y = G(x)
 
+    x = x.to_numpy()
+    y = y.to_numpy()
+    x = x.reshape((x.shape[1], x.shape[2], x.shape[3]))
+    y = y.reshape((y.shape[1], y.shape[2], y.shape[3]))
+
     # Show aligned pictures
     plt.figure()
     if len(ground_truth_file):
-        ground = read_picture(ground_truth_file)
+        ground = read_picture(ground_truth_file).to_numpy()
+        ground = ground.reshape(
+            (ground.shape[1], ground.shape[2], ground.shape[3]))
         display_list = [x, ground, y]
         title = ["Input image", "Ground truth", "Generated Image"]
         n = 3
