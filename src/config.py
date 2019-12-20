@@ -8,6 +8,14 @@ TRAIN_PATH = "./data1/luozizhang/dataset"  # path of the training dataset
 TEST_PATH = "./data"  # path of the testing dataset
 DEV_PATH = "./data"  # path of the develep dataset
 
+DATASET_SIZE = {
+    "facades": {"traing": 400, "test": 206},
+    "cityscapes": {"traing": 2975, "test": 500},
+    "night2day": {"traing": 17823, "test": 2297},
+    "edges2shoes": {"traing": 49825, "test": 200},
+    "edges2handbags": {"traing": 138567, "test": 200}
+}
+
 # Train
 BATCH_SIZE = 10
 EPOCHS = 10
@@ -21,12 +29,12 @@ LOSS_PLOT_PATH = "./model/loss.jpg"
 NGF = 64  # number of generator filters
 LEAKY_RELU_ALPHA = 0.2  # Alpha value for leaky_relu
 OUTPUT_CHANNELs = 3
-G_SAVE_PATH="./model/G_model"
+G_SAVE_PATH = "./model/G_model"
 LAMBDA = 1.0
 
 # D model
 NDF = 64  # number of discriminator filters
-D_SAVE_PATH="./model/D_model"
+D_SAVE_PATH = "./model/D_model"
 
 # test
 TEST_FIG_PATH = "./test.jpg"
