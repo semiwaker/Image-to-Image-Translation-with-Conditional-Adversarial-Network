@@ -77,7 +77,15 @@ def read_picture(input_file):
 
 
 def load_data(dataset, datatype, idx):
-    pass
+    if datatype is 'train':
+        pass
+    elif datatype in ['val', 'test', 'val_test']:
+        datatype = 'val_test'
+    pkl_path = os.path.join(config.TRAIN_PATH, 'pkl', dataset, datatype+'_'+str(idx)+'.pkl')
+    x_img, y_img = load_pkl(pkl_path)
+    x_img = tf.convert_to_tensor(x_img)
+    y_img = tf.convert_to_tensor(y_img)
+    return x_img, y_img
 
 
 def make_dataset(dataset_name, dataset_type):
