@@ -35,9 +35,9 @@ class Timer:
         m = (delta % 3600) // 60
         s = delta % 60
         result = ""
-        if h>0:
+        if h > 0:
             result += f"{h} hours "
-        if h>0 or m>0:
+        if h > 0 or m > 0:
             result += f"{m} minutes "
         result += f"{s} seconds"
         return result
@@ -98,7 +98,6 @@ def train(dataset_name, verbose, make_graph):
     train_dataset = data.make_dataset(dataset_name, "train")
     test_dataset = data.make_dataset(dataset_name, "test")
 
-
     G = generator()
     D = discriminator()
 
@@ -157,7 +156,7 @@ def train(dataset_name, verbose, make_graph):
                 VPrint(f"Test loss: G {test_g_loss} D {test_d_loss}")
 
                 # make graph
-                
+
                 if make_graph:
                     g_loss_train.append(batch_G_loss)
                     d_loss_train.append(batch_D_loss)
@@ -166,17 +165,15 @@ def train(dataset_name, verbose, make_graph):
                     batch_cnt.append(total_batch)
 
                     # plt.plot(batch_cnt, g_loss_train,
-                            #  label="generator train loss")
+                    #  label="generator train loss")
                     # plt.plot(batch_cnt, d_loss_train,
-                            #  label="discriminator train loss")
+                    #  label="discriminator train loss")
                     # plt.plot(batch_cnt, g_loss_test,
-                            #  label="generator test loss")
+                    #  label="generator test loss")
                     # plt.plot(batch_cnt, d_loss_test,
-                            #  label="discriminator test loss")
+                    #  label="discriminator test loss")
                     # plt.legend(best)
                     # plt.draw()
-
-        
 
         VPrint(f"Epoch {epoch} time used:{epoch_timer()}")
         VPrint(epoch_train_loss)

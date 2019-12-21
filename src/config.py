@@ -32,14 +32,14 @@ NGF = 64  # number of generator filters
 LEAKY_RELU_ALPHA = 0.2  # Alpha value for leaky_relu
 OUTPUT_CHANNELs = 3
 G_SAVE_PATH = "./model/G_model"
-LAMBDA = 0.0
+LAMBDA = 100.0
 
 # D model
 NDF = 64  # number of discriminator filters
 D_SAVE_PATH = "./model/D_model"
 
 # test
-TEST_FIG_PATH = "./test.jpg"
+TEST_FIG_PATH = "./test"
 
 
 # tf
