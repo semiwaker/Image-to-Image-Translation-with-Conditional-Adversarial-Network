@@ -3,7 +3,8 @@ import data
 from model import *
 
 import argparse
-import datetime
+import time
+import sys
 
 import tensorflow as tf
 import tensorlayer as tl
@@ -29,10 +30,20 @@ class Timer:
         self.reset()
 
     def __call__(self):
-        return (datetime.time() - self.start_time).strftime("%H:%M:%S")
+        delta = int(time.time() - self.start_time)
+        h = delta//3600
+        m = (delta % 3600) // 60
+        s = delta % 60
+        result = ""
+        if h>0:
+            result += f"{h} hours "
+        if h>0 or m>0:
+            result += f"{m} minutes "
+        result += f"{s} seconds"
+        return result
 
     def reset(self):
-        self.start_time = datetime.time()
+        self.start_time = time.time()
 
 
 class AccumulatedLoss:
@@ -51,16 +62,16 @@ class AccumulatedLoss:
         self.D_loss += D_loss
 
     def __str__(self):
-        return f"{name} loss: G {self.G_loss/cnt} D {self.D_loss/cnt}"
+        return f"{self.name} loss: G {self.G_loss/self.cnt} D {self.D_loss/self.cnt}"
 
 
 def calc_loss(x, y, G, D):
     z = G(x)
-    d_logits = D(inputs=(y, x))
-    d2_logits = D(inputs=(z, x))
+    d_logits = D(inputs=[y, x])
+    d2_logits = D(inputs=[z, x])
 
-    d_loss = entropy_loss(d_logits, 1) + entropy_loss(d2_logits, 0)
-    g_loss = entropy_loss(d2_logits, 1) + config.LAMBDA * L1_loss(y, z)
+    d_loss = entropy_loss(d_logits, 1.0) + entropy_loss(d2_logits, 0.0)
+    g_loss = entropy_loss(d2_logits, 1.0) + config.LAMBDA * L1_loss(y, z)
 
     return g_loss, d_loss
 
@@ -68,14 +79,15 @@ def calc_loss(x, y, G, D):
 def test(dataset, G, D):
     g_sum = 0.0
     d_sum = 0.0
-    for (x, y) in enumerate(dataset):
+    for i, (x, y) in enumerate(dataset):
         g_loss, d_loss = calc_loss(x, y, G, D)
         g_sum += g_loss
         d_sum += d_loss
-    return g_sum / len(dataset), d_sum / len(dataset)
+    return np.average(g_sum), np.average(d_sum)
 
 
 def train(dataset_name, verbose, make_graph):
+    global _verbose
     _verbose = verbose
     EPOCHS = config.EPOCHS
     LR = config.ADAM_LR
@@ -86,6 +98,7 @@ def train(dataset_name, verbose, make_graph):
     train_dataset = data.make_dataset(dataset_name, "train")
     test_dataset = data.make_dataset(dataset_name, "test")
 
+
     G = generator()
     D = discriminator()
 
@@ -94,20 +107,18 @@ def train(dataset_name, verbose, make_graph):
 
     # set up pyplot
     if make_graph:
-        plt.ion()
+        # plt.ion()
         g_loss_train = []
         g_loss_test = []
         d_loss_train = []
         d_loss_test = []
         batch_cnt = []
         total_batch = 0
-        plt.legend("best")
 
     # Start training
     VPrint("Start training")
     global_timer = Timer()
     global_train_loss = AccumulatedLoss("Global train")
-    global_test_loss = AccumulatedLoss("Global test")
 
     G.train()
     D.train()
@@ -116,10 +127,9 @@ def train(dataset_name, verbose, make_graph):
         epoch_timer = Timer()
         VPrint(f"Start epoch {epoch}")
         epoch_train_loss = AccumulatedLoss("Epoch train")
-        epoch_test_loss = AccumulatedLoss("Epoch test")
         running_loss = AccumulatedLoss("Running")
 
-        for (x, y), i in enumerate(train_dataset):
+        for i, (x, y) in enumerate(train_dataset):
             total_batch += 1
 
             with tf.GradientTape(persistent=True) as tape:
@@ -133,8 +143,8 @@ def train(dataset_name, verbose, make_graph):
             D_optimizer.apply_gradients(zip(grad, D.trainable_weights))
 
             # Caculate batch loss
-            batch_D_loss = np.average(d_loss.to_numpy())
-            batch_G_loss = np.average(g_loss.to_numpy())
+            batch_D_loss = np.average(d_loss)
+            batch_G_loss = np.average(g_loss)
             global_train_loss.accumulate(batch_G_loss, batch_D_loss)
             epoch_train_loss.accumulate(batch_G_loss, batch_D_loss)
             running_loss.accumulate(batch_G_loss, batch_D_loss)
@@ -144,33 +154,40 @@ def train(dataset_name, verbose, make_graph):
                 running_loss.reset()
 
                 test_g_loss, test_d_loss = test(test_dataset, G, D)
-                global_test_loss.accumulate(test_g_loss, test_d_loss)
-                epoch_test_loss.accumulate(test_g_loss, test_d_loss)
+                VPrint(f"Test loss: G {test_g_loss} D {test_d_loss}")
 
                 # make graph
-                g_loss_train.append(batch_G_loss)
-                d_loss_train.append(batch_D_loss)
-                g_loss_test.append(test_g_loss)
-                d_loss_test.append(test_d_loss)
-                batch_cnt.append(total_batch)
+                
                 if make_graph:
-                    plt.plot(batch_cnt, g_loss_train,
-                             label="generator train loss")
-                    plt.plot(batch_cnt, d_loss_train,
-                             label="discriminator train loss")
-                    plt.plot(batch_cnt, g_loss_test,
-                             label="generator test loss")
-                    plt.plot(batch_cnt, d_loss_test,
-                             label="discriminator test loss")
-                    plt.draw()
+                    g_loss_train.append(batch_G_loss)
+                    d_loss_train.append(batch_D_loss)
+                    g_loss_test.append(test_g_loss)
+                    d_loss_test.append(test_d_loss)
+                    batch_cnt.append(total_batch)
+
+                    # plt.plot(batch_cnt, g_loss_train,
+                            #  label="generator train loss")
+                    # plt.plot(batch_cnt, d_loss_train,
+                            #  label="discriminator train loss")
+                    # plt.plot(batch_cnt, g_loss_test,
+                            #  label="generator test loss")
+                    # plt.plot(batch_cnt, d_loss_test,
+                            #  label="discriminator test loss")
+                    # plt.legend(best)
+                    # plt.draw()
+
+        
 
         VPrint(f"Epoch {epoch} time used:{epoch_timer()}")
         VPrint(epoch_train_loss)
-        VPrint(epoch_test_loss)
+
+        test_g_loss, test_d_loss = test(test_dataset, G, D)
+        VPrint(f"Test loss: G {test_g_loss} D {test_d_loss}")
 
         # make graph
         if make_graph:
-            plt.ioff()
+            # plt.ioff()
+            plt.figure()
             plt.plot(batch_cnt, g_loss_train,
                      label="generator train loss")
             plt.plot(batch_cnt, d_loss_train,
@@ -179,16 +196,18 @@ def train(dataset_name, verbose, make_graph):
                      label="generator test loss")
             plt.plot(batch_cnt, d_loss_test,
                      label="discriminator test loss")
+            plt.legend(loc="best")
             plt.savefig(config.LOSS_PLOT_PATH, dpi=120, quality=100)
             plt.show()
 
     VPrint(f"End training. Time used {global_timer()}")
     VPrint(global_train_loss)
-    VPrint(global_test_loss)
+    test_g_loss, test_d_loss = test(test_dataset, G, D)
+    VPrint(f"Test loss: G {test_g_loss} D {test_d_loss}")
 
     # save model
-    G.save_weights(config.G_SAVE_PATH+'_'+dataset_name)
-    D.save_weights(config.D_SAVE_PATH+'_'+dataset_name)
+    G.save_weights(config.G_SAVE_PATH+'_'+dataset_name+".hdf5")
+    D.save_weights(config.D_SAVE_PATH+'_'+dataset_name+".hdf5")
 
 
 if __name__ == "__main__":
@@ -197,7 +216,6 @@ if __name__ == "__main__":
         "dataset",
         metavar="D",
         type=str,
-        nargs=1,
         help="the name of the dataset"
     )
     parser.add_argument(
@@ -208,5 +226,13 @@ if __name__ == "__main__":
         "-g", "--makegraph",
         action="store_true"
     )
+    parser.add_argument(
+        "--gpu",
+        type=int,
+        help="which gpu to use"
+    )
     args = parser.parse_args()
+
+    config.configure_gpu(args.gpu)
+
     train(args.dataset, args.verbose, args.makegraph)
