@@ -33,23 +33,23 @@ for root, dirs, files in os.walk("/data1/luozizhang/datasets/" + dataset_name):
                 x_img = y_img
                 y_img = tmp
 
-            img = np.concatenate((x_img, y_img), axis=1)
-            if img.shape != (256, 512, 3):
+            # img = np.concatenate((x_img, y_img), axis=1)
+            if x_img.shape != (256, 256, 3):
                 raise Exception(img.shape)
 
             if root.endswith('train'):
-                train_data.append(img)
+                train_data.append((x_img, y_img))
             elif root.endswith('val'):
-                val_test_data.append(img)
+                val_test_data.append((x_img, y_img))
             elif root.endswith('test'):
-                val_test_data.append(img)
+                val_test_data.append((x_img, y_img))
             else:
                 raise Exception("Key error")
 
 # x_img, y_img = train_data[0]
-img = train_data[0] # C = 127.5
-x_img = img[:, :256, :]
-y_img = img[:, 256:, :]
+x_img, y_img = train_data[0] # C = 127.5
+# x_img = img[:, :256, :]
+# y_img = img[:, 256:, :]
 im = Image.fromarray(np.uint8(x_img))
 im.save(dataset_name+'_x.jpg')
 im = Image.fromarray(np.uint8(y_img))
@@ -57,5 +57,11 @@ im.save(dataset_name+'_y.jpg')
 print(len(train_data))
 print(len(val_test_data))
 
-dump_pkl(train_data, '/data1/luozizhang/datasets/' + dataset_name + '_train.pkl')
-dump_pkl(val_test_data, '/data1/luozizhang/datasets/' + dataset_name + '_val_test.pkl')
+tot = 0
+for t in train_data:
+    tot += 1
+    dump_pkl(t, '/data1/luozizhang/datasets/pkl/' + dataset_name + '/' + 'train_' + str(tot) + '.pkl')
+tot = 0
+for t in val_test_data:
+    tot += 1
+    dump_pkl(t, '/data1/luozizhang/datasets/pkl/' + dataset_name + '/' + 'val_test_' + str(tot) + '.pkl')
