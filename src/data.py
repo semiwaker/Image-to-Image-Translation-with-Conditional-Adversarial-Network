@@ -70,10 +70,15 @@ def load_pkl(pkl_path):
 #         self.cnt+=1
 #         return self.generate()
 
-def read_picture(input_file):
+def read_picture(dataset, input_file):
     'Read a picture, transform into model input format'
-    # TODO: imple this function
-    pass
+    x, y = load_data(dataset, "val", input_file)
+    x = tf.cast(x, dtype=tf.float32)
+    y = tf.cast(y, dtype=tf.float32)
+    x = (x-127.5)/127.5
+    y = (y-127.5)/127.5
+    return (tf.reshape(x, (1, x.shape[0], x.shape[1], x.shape[2])),
+            tf.reshape(y, (1, y.shape[0], y.shape[1], y.shape[2])))
 
 
 def load_data(dataset, datatype, idx):
@@ -81,7 +86,8 @@ def load_data(dataset, datatype, idx):
         pass
     elif datatype in ['val', 'test', 'val_test']:
         datatype = 'val_test'
-    pkl_path = os.path.join(config.TRAIN_PATH, 'pkl', dataset, datatype+'_'+str(idx)+'.pkl')
+    pkl_path = os.path.join(config.TRAIN_PATH, 'pkl',
+                            dataset, datatype+'_'+str(idx)+'.pkl')
     x_img, y_img = load_pkl(pkl_path)
     x_img = tf.convert_to_tensor(x_img)
     y_img = tf.convert_to_tensor(y_img)
@@ -90,15 +96,16 @@ def load_data(dataset, datatype, idx):
 
 def make_dataset(dataset_name, dataset_type):
     def data_generator():
-        for i in range(config.DATASET_SIZE[dataset_name][dataset_type]):
+        for i in range(1, config.DATASET_SIZE[dataset_name][dataset_type]+1):
             yield load_data(dataset_name, dataset_type, i)
     d = tf.data.Dataset.from_generator(
         generator=data_generator,
         output_types=(tf.float32, tf.float32)
     )
-    d.map(lambda x: (x-127.5)/127.5)
-    d.shuffle(1000)
-    d.batch(config.BATCH_SIZE)
+    d = d.map(lambda x, y: ((x-127.5)/127.5, (y-127.5)/127.5))
+    d = d.shuffle(4096)
+    d = d.batch(config.BATCH_SIZE)
+    d = d.prefetch(2)
     return d
 
 
