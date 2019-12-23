@@ -79,17 +79,20 @@ def calc_loss(x, y, G, D):
 def test(dataset, G, D):
     g_sum = 0.0
     d_sum = 0.0
+    G.eval()
+    D.eval()
     for i, (x, y) in enumerate(dataset):
         g_loss, d_loss = calc_loss(x, y, G, D)
         g_sum += g_loss
         d_sum += d_loss
+    G.train()
+    D.train()
     return np.average(g_sum), np.average(d_sum)
 
 
-def train(dataset_name, verbose, make_graph):
+def train(dataset_name, verbose, make_graph, epochs):
     global _verbose
     _verbose = verbose
-    EPOCHS = config.EPOCHS
     LR = config.ADAM_LR
     BETA1 = config.ADAM_BETA1
     BETA2 = config.ADAM_BETA2
@@ -122,7 +125,7 @@ def train(dataset_name, verbose, make_graph):
     G.train()
     D.train()
 
-    for epoch in range(1, EPOCHS+1):
+    for epoch in range(1, epochs+1):
         epoch_timer = Timer()
         VPrint(f"Start epoch {epoch}")
         epoch_train_loss = AccumulatedLoss("Epoch train")
@@ -184,7 +187,7 @@ def train(dataset_name, verbose, make_graph):
         # make graph
         if make_graph:
             # plt.ioff()
-            plt.figure()
+            plt.clf()
             plt.plot(batch_cnt, g_loss_train,
                      label="generator train loss")
             plt.plot(batch_cnt, d_loss_train,
@@ -228,8 +231,13 @@ if __name__ == "__main__":
         type=int,
         help="which gpu to use"
     )
+    parser.add_argument(
+        "-e", "--epoch",
+        type=int,
+        default=config.EPOCHS
+    )
     args = parser.parse_args()
 
     config.configure_gpu(args.gpu)
 
-    train(args.dataset, args.verbose, args.makegraph)
+    train(args.dataset, args.verbose, args.makegraph, args.epoch)

@@ -4,6 +4,7 @@ import random
 import pickle as pkl
 import numpy as np
 import tensorflow as tf
+import tensorlayer as tl
 
 import config
 
@@ -70,9 +71,9 @@ def load_pkl(pkl_path):
 #         self.cnt+=1
 #         return self.generate()
 
-def read_picture(dataset, input_file):
+def read_picture(dataset, datatype, input_file):
     'Read a picture, transform into model input format'
-    x, y = load_data(dataset, "val", input_file)
+    x, y = load_data(dataset, datatype, input_file)
     x = tf.cast(x, dtype=tf.float32)
     y = tf.cast(y, dtype=tf.float32)
     x = (x-127.5)/127.5
@@ -94,15 +95,80 @@ def load_data(dataset, datatype, idx):
     return x_img, y_img
 
 
+def create_matrix():
+    M_rotate = tl.prepro.affine_rotation_matrix()
+    M_flip = tl.prepro.affine_horizontal_flip_matrix()
+    M_shift = tl.prepro.affine_shift_matrix(
+        h=config.PICTURE_SIZE, w=config.PICTURE_SIZE)
+    M_shear = tl.prepro.affine_shear_matrix()
+    M_zoom = tl.prepro.affine_zoom_matrix()
+
+    M_combined = M_shift.dot(M_zoom).dot(M_shear).dot(M_flip).dot(M_rotate)
+    return M_combined
+
+
+def resize(input_image, real_image, height, width):
+    input_image = tf.image.resize(input_image, [height, width],
+                                  method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    real_image = tf.image.resize(real_image, [height, width],
+                                 method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+
+    return input_image, real_image
+
+
+def random_crop(input_image, real_image):
+    stacked_image = tf.stack([input_image, real_image], axis=0)
+    cropped_image = tf.image.random_crop(
+        stacked_image, size=[2, config.PICTURE_SIZE, config.PICTURE_SIZE, 3])
+
+    return cropped_image[0], cropped_image[1]
+
+
+def normalize(input_image, real_image):
+    input_image = (input_image / 127.5) - 1
+    real_image = (real_image / 127.5) - 1
+
+    return input_image, real_image
+
+
+@tf.function()
+def random_jitter(input_image, real_image):
+    # resizing to 286 x 286 x 3
+    input_image, real_image = resize(input_image, real_image, 286, 286)
+
+    # randomly cropping to 256 x 256 x 3
+    input_image, real_image = random_crop(input_image, real_image)
+
+    if tf.random.uniform(()) > 0.5:
+        # random mirroring
+        input_image = tf.image.flip_left_right(input_image)
+        real_image = tf.image.flip_left_right(real_image)
+
+    return input_image, real_image
+
+
 def make_dataset(dataset_name, dataset_type):
-    def data_generator():
+    def func(x, y):
+        def transform(x, y):
+            M = create_matrix()
+            x = tl.prepro.affine_transform_cv2(x, M)
+            y = tl.prepro.affine_transform_cv2(y, M)
+            return x, y
+
+        # x, y = tf.numpy_function( transform, [x,y], (tf.float32, tf.float32))
+        x, y = tf.numpy_function(
+            random_jitter, [x, y], (tf.float32, tf.float32))
+        x = (x / 127.5)-1.0
+        y = (y / 127.5)-1.0
+        return x, y
+
+    def generator():
         for i in range(1, config.DATASET_SIZE[dataset_name][dataset_type]+1):
             yield load_data(dataset_name, dataset_type, i)
+
     d = tf.data.Dataset.from_generator(
-        generator=data_generator,
-        output_types=(tf.float32, tf.float32)
-    )
-    d = d.map(lambda x, y: ((x-127.5)/127.5, (y-127.5)/127.5))
+        generator, output_types=(tf.float32, tf.float32))
+    d = d.map(func, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     d = d.shuffle(4096)
     d = d.batch(config.BATCH_SIZE)
     d = d.prefetch(2)
