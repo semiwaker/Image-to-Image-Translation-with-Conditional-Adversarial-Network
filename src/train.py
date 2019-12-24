@@ -181,6 +181,10 @@ def train(dataset_name, verbose, make_graph):
         test_g_loss, test_d_loss = test(test_dataset, G, D)
         VPrint(f"Test loss: G {test_g_loss} D {test_d_loss}")
 
+        # save model
+        G.save_weights(config.G_SAVE_PATH+'_'+dataset_name+".hdf5")
+        D.save_weights(config.D_SAVE_PATH+'_'+dataset_name+".hdf5")
+
         # make graph
         if make_graph:
             # plt.ioff()
@@ -201,10 +205,6 @@ def train(dataset_name, verbose, make_graph):
     VPrint(global_train_loss)
     test_g_loss, test_d_loss = test(test_dataset, G, D)
     VPrint(f"Test loss: G {test_g_loss} D {test_d_loss}")
-
-    # save model
-    G.save_weights(config.G_SAVE_PATH+'_'+dataset_name+".hdf5")
-    D.save_weights(config.D_SAVE_PATH+'_'+dataset_name+".hdf5")
 
 
 if __name__ == "__main__":
