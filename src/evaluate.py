@@ -9,8 +9,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 
-def show_generated(G, dataset, input_file):
-    x, ground = read_picture(dataset, input_file)
+def show_generated(G, dataset, datatype, input_file):
+    x, ground = read_picture(dataset, datatype, input_file)
 
     y = G(x)
 
@@ -20,7 +20,7 @@ def show_generated(G, dataset, input_file):
                         (ground.shape[1], ground.shape[2], ground.shape[3]))
 
     # Show aligned pictures
-    plt.figure()
+    plt.clf()
     display_list = [x, ground, y]
     title = ["Input image", "Ground truth", "Generated Image"]
     n = 3
@@ -43,9 +43,19 @@ if __name__ == "__main__":
         help="Dataset"
     )
     parser.add_argument(
+        "-t", "--type",
+        type=str,
+        default="val"
+    )
+    parser.add_argument(
         "--gpu",
         type=int,
         help="which gpu to use"
+    )
+    parser.add_argument(
+        "-i", "--inputs",
+        type=int,
+        nargs='*',
     )
     args = parser.parse_args()
 
@@ -55,5 +65,9 @@ if __name__ == "__main__":
     G.load_weights(config.G_SAVE_PATH+"_"+args.dataset+".hdf5")
     G.eval()
 
-    for i in range(1, config.DATASET_SIZE[args.dataset]["test"]+1):
-        show_generated(G, args.dataset, i)
+    if args.inputs is None:
+        for i in range(1, config.DATASET_SIZE[args.dataset]["test"]+1):
+            show_generated(G, args.dataset, args.type, i)
+    else:
+        for i in args.inputs:
+            show_generated(G, args.dataset, args.type, i)
