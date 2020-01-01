@@ -77,17 +77,13 @@ def calc_loss(x, y, G, D):
 
 
 def test(dataset, G, D):
-    g_sum = 0.0
-    d_sum = 0.0
     G.eval()
     D.eval()
-    for i, (x, y) in enumerate(dataset):
-        g_loss, d_loss = calc_loss(x, y, G, D)
-        g_sum += g_loss
-        d_sum += d_loss
+    loss  = [ calc_loss(x, y, G, D) for x, y in dataset ]
+    loss = np.average(loss, 0)
     G.train()
     D.train()
-    return np.average(g_sum), np.average(d_sum)
+    return loss
 
 
 def train(dataset_name, verbose, make_graph, epochs):
@@ -140,14 +136,10 @@ def train(dataset_name, verbose, make_graph, epochs):
             # train generator
             grad = tape.gradient(g_loss, G.trainable_weights)
             G_optimizer.apply_gradients(zip(grad, G.trainable_weights))
-            # save model
-            G.save_weights(config.G_SAVE_PATH+'_'+dataset_name+".hdf5")
 
             # train discriminator
             grad = tape.gradient(d_loss, D.trainable_weights)
             D_optimizer.apply_gradients(zip(grad, D.trainable_weights))
-            # save model
-            D.save_weights(config.D_SAVE_PATH+'_'+dataset_name+".hdf5")
 
             # Caculate batch loss
             batch_D_loss = np.average(d_loss)
@@ -162,6 +154,9 @@ def train(dataset_name, verbose, make_graph, epochs):
 
                 test_g_loss, test_d_loss = test(test_dataset, G, D)
                 VPrint(f"Test loss: G {test_g_loss} D {test_d_loss}")
+
+                G.save_weights(config.G_SAVE_PATH+'_'+dataset_name+".hdf5")
+                D.save_weights(config.D_SAVE_PATH+'_'+dataset_name+".hdf5")
 
                 # make graph
 
@@ -188,6 +183,8 @@ def train(dataset_name, verbose, make_graph, epochs):
 
         test_g_loss, test_d_loss = test(test_dataset, G, D)
         VPrint(f"Test loss: G {test_g_loss} D {test_d_loss}")
+        G.save_weights(config.G_SAVE_PATH+'_'+dataset_name+".hdf5")
+        D.save_weights(config.D_SAVE_PATH+'_'+dataset_name+".hdf5")
 
         # make graph
         if make_graph:
@@ -205,6 +202,8 @@ def train(dataset_name, verbose, make_graph, epochs):
             plt.savefig(config.LOSS_PLOT_PATH, dpi=120, quality=100)
             plt.show()
 
+    G.save_weights(config.G_SAVE_PATH+'_'+dataset_name+".hdf5")
+    D.save_weights(config.D_SAVE_PATH+'_'+dataset_name+".hdf5")
     VPrint(f"End training. Time used {global_timer()}")
     VPrint(global_train_loss)
     test_g_loss, test_d_loss = test(test_dataset, G, D)
