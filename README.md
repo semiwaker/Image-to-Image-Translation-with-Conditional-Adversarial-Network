@@ -118,7 +118,26 @@ opencv-python 4.1.2.30
 
 ### 准备数据
 
-TODO: fill this section
+想要下载我们使用的数据，可以运行脚本，其中可以通过更改\$TAR_FILE与\$TARGET_DIR来决定数据存放的位置
+
+```sh
+./download_dataset.sh
+```
+
+接着在`src/config.py`中修改`TRAIN_PATH`使其对应刚才下好的数据集
+
+为了在训练时不用每次都读jpg格式的图片，所以将每一张图片对应存一个预处理后的pickle文件
+
+但由于写制作pickle脚本的人比较懒，所以没有提供数据集名字的接口，所以每次运行前需要将`make_pkl.py`中第18行的数据集名字手动更改，然后直接运行即可
+
+```sh
+cd src
+python make_pkl.py
+```
+
+这样会在`TRAIN_PATH/pkl/$dataset_name`目录下，创造预处理后的pickle文件，以供后续训练使用
+
+
 
 ### 使用预训练模型
 
