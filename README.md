@@ -36,7 +36,9 @@
 
 在原始的Encoder-Decoder的基础上，增加了Skip-connection，就是把Encoder的层的数据整个传输到Decoder的对应层。
 
-***这里需要有能人士贴一个论文Figure3的图QAQ***
+![UNet](images/UNet.jpg)
+
+由于图片大小所限，这里不能直接画出生成器的架构，详细请看参数部分。
 
 ### 判别器架构
 
@@ -46,6 +48,10 @@
 
 PatchGAN判别器则是输出一个正方形的张量，张量中的每个数据表示图像中某一块（例如70x70的一块）的可信程度。
 为了达到这个目的，CNN层被小心地设计，以使得输出张量中的每个点的感受野是设置好的值（例如70x70)。
+
+结构如下图所示：
+
+![Discriminator](images/discriminator.jpg)
 
 ## 参数
 
@@ -114,6 +120,8 @@ opencv-python 4.1.2.30
 
 TODO: fill this section
 
+### 使用预训练模型
+
 如果你只想使用我们已经训练好的权重，进行检验
 
 ```sh
@@ -145,7 +153,7 @@ evaluate.py会将指定的数据集中指定的图片取出，使用训练好的
 
 ## 结果
 
-我们在facades数据集、edges2shoes数据集和edges2handbags数据集上取得了较好的成果。
+我们在facades数据集、edges2shoes数据集和edges2handbags数据集上取得了较好的成果。result目录下，有我们在这几个数据集下以测试集为输入生成的部分结果。
 
 facades数据集的输入是建筑的表面布局，输出是建筑物的正面图片。
 
